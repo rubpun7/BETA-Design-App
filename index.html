@@ -42,7 +42,7 @@
 <body>
 
 <div class="container">
-    <h2 style="margin:0;">Design Nuch Potchaman Pro</h2>
+    <h2 style="margin:0;">Design Nuch Kid Gowns</h2>
     
     <div class="controls">
         <button class="btn btn-blue" onclick="toggleSidebar('layers')">Layers (👁️)</button>
@@ -57,10 +57,10 @@
             <strong>Color:</strong>
             <input type="color" id="colorPicker" value="#ff0000">
             <div class="swatch-container">
-                <div class="swatch" style="background: #800000" onclick="setQuickColor('#800000')"></div>
-                <div class="swatch" style="background: #000080" onclick="setQuickColor('#000080')"></div>
-                <div class="swatch" style="background: #FFD700" onclick="setQuickColor('#FFD700')"></div>
-                <div class="swatch" style="background: #FFFFFF" onclick="setQuickColor('#FFFFFF')"></div>
+                <div class="swatch" style="background: #0f0f0f" onclick="setQuickColor('#0f0f0f')"></div>
+                <div class="swatch" style="background: #101064" onclick="setQuickColor('#101064')"></div>
+                <div class="swatch" style="background: #ff0000" onclick="setQuickColor('#ff0000')"></div>
+                <div class="swatch" style="background: #0000ff" onclick="setQuickColor('#0000ff')"></div>
             </div>
         </div>
         <div class="zoom-control">
@@ -90,20 +90,29 @@
 
         <div id="sidebarPresets" class="sidebar">
             <div class="cat-tabs">
-                <button class="tab-btn active" onclick="showTab('gown')">Gowns</button>
-                <button class="tab-btn" onclick="showTab('arm')">Arms</button>
-                <button class="tab-btn" onclick="showTab('hat')">Hats</button>
+                <button class="tab-btn active" onclick="showTab('เสื้อครุย')">Gowns</button>
+                <button class="tab-btn" onclick="showTab('แขน')">Arms</button>
+                <button class="tab-btn" onclick="showTab('หมวก')">Hats</button>
             </div>
             
-            <div id="gown" class="preset-group active">
+            <div id="เสื้อครุย" class="preset-group active">
                 <button class="preset-btn" onclick="addPreset('Original', 'แบบชุดครุย/เสื้อ/Original.png')">มาตราฐาน</button>
                 <button class="preset-btn" onclick="addPreset('Origin +1', 'แบบชุดครุย/เสื้อ/Origin +1.png')">มาตราฐาน +1</button>
+                <button class="preset-btn" onclick="addPreset('Switch BS', 'แบบชุดครุย/เสื้อ/Switch BS.png')">สลับใหญ่เล็ก</button>
+                <button class="preset-btn" onclick="addPreset('2 Lines', 'แบบชุดครุย/เสื้อ/2 Lines.png')">2 แถบเท่า</button>
+                <button class="preset-btn" onclick="addPreset('3 Lines', 'แบบชุดครุย/เสื้อ/3 Lines.png')">3 แถบเท่า</button>
             </div>
-            <div id="arm" class="preset-group">
+            <div id="แขน" class="preset-group">
                 <button class="preset-btn" onclick="addPreset('Chevron 1', 'แบบชุดครุย/เสื้อ/Chevrons/Chevron 1.png')">แถบแขน 1</button>
+                <button class="preset-btn" onclick="addPreset('Chevron 2', 'แบบชุดครุย/เสื้อ/Chevrons/Chevron 2.png')">แถบแขน 2</button>
+                <button class="preset-btn" onclick="addPreset('Chevron 3', 'แบบชุดครุย/เสื้อ/Chevrons/Chevron 3.png')">แถบแขน 3</button>
             </div>
-            <div id="hat" class="preset-group">
+            <div id="หมวก" class="preset-group">
                 <button class="preset-btn" onclick="addPreset('Cap', 'แบบชุดครุย/หมวก/Cap.png')">หมวกเปล่า</button>
+                <button class="preset-btn" onclick="addPreset('Hat Piping', 'แบบชุดครุย/หมวก/Hat Piping.png')">แถบผ้าหมวก</button>
+                <button class="preset-btn" onclick="addPreset('Ribbon 1', 'แบบชุดครุย/หมวก/Ribbon 1.png')">ริบบิ้น 1</button>
+                <button class="preset-btn" onclick="addPreset('Ribbon 2', 'แบบชุดครุย/หมวก/Ribbon 2.png')">ริบบิ้น 2</button>
+                <button class="preset-btn" onclick="addPreset('Ribbon 3', 'แบบชุดครุย/หมวก/Ribbon 3.png')">ริบบิ้น 3</button>
             </div>
         </div>
     </div>
@@ -116,7 +125,7 @@
     const offCtx = offCanvas.getContext('2d', { willReadFrequently: true });
 
     // --- แก้ไขตรงนี้: ใส่ชื่อไฟล์ลายน้ำของคุณ ---
-    const watermarkUrl = 'watermark.png'; 
+    const watermarkUrl = 'แบบชุดครุย/watermark.png'; 
     // ---------------------------------------
 
     let layers = []; 
@@ -166,7 +175,7 @@
 
     // --- ฟังก์ชันอัปเกรด: ปรับขนาดภาพให้เล็กลงอัตโนมัติ ---
     function addLayer(img, name) {
-        const MAX_WIDTH = 600; // กำหนดความกว้างสูงสุดของ Canvas
+        const MAX_WIDTH = 1000; // กำหนดความกว้างสูงสุดของ Canvas
         if (layers.length === 0) {
             let scale = 1;
             if (img.width > MAX_WIDTH) {
@@ -311,3 +320,4 @@
 </script>
 </body>
 </html>
+
