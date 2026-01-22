@@ -7,12 +7,35 @@
     <style>
         body { font-family: Arial, sans-serif; margin: 0; padding: 10px; background: #f0f0f0; touch-action: manipulation; }
         .container { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 1000px; margin: auto; display: flex; flex-direction: column; gap: 10px; }
+        
         .main-layout { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; }
-        .canvas-area { flex: 2; min-width: 300px; position: relative; overflow: auto; border: 1px solid #ddd; background: #ccc; padding: 20px; border-radius: 8px; }
-        .sidebar { flex: 1; min-width: 250px; background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 10px; display: none; }
-        .sidebar.active { display: block; }
+        
+        /* แก้ไขพื้นที่ Canvas ให้รองรับการเลื่อนเมื่อซูม */
+        .canvas-area { 
+            flex: 2; 
+            min-width: 300px; 
+            height: 70vh; /* กำหนดความสูงพื้นที่ทำงาน */
+            overflow: auto; /* ให้เกิดแถบเลื่อนเมื่อซูม */
+            background: #ccc; 
+            border: 2px solid #ddd; 
+            border-radius: 8px; 
+            position: relative;
+        }
 
-        canvas { display: block; margin: 0 auto; background: white; touch-action: none; transition: transform 0.1s ease; box-shadow: 0 0 10px rgba(0,0,0,0.3); }
+        /* Wrapper สำหรับช่วยคำนวณขนาดพื้นที่ซูม */
+        #canvasWrapper {
+            position: relative;
+            transform-origin: 0 0;
+            margin: auto;
+        }
+
+        canvas { 
+            display: block; 
+            background: white; 
+            touch-action: none; 
+            transform-origin: 0 0; /* ซูมจากมุมซ้ายบน */
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+        }
         
         .controls { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
         .btn { padding: 10px; border-radius: 5px; border: none; font-weight: bold; cursor: pointer; color: white; font-size: 12px; }
@@ -21,32 +44,32 @@
         .btn-green { background: #27ae60; }
         .btn-red { background: #e74c3c; }
 
-        .swatch-container { display: flex; gap: 5px; margin-top: 5px; flex-wrap: wrap; }
-        .swatch { width: 25px; height: 25px; border-radius: 50%; border: 1px solid #ccc; cursor: pointer; }
+        .sidebar { flex: 1; min-width: 250px; background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 10px; display: none; }
+        .sidebar.active { display: block; }
 
-        .layer-item { display: flex; align-items: center; justify-content: space-between; padding: 8px; border-bottom: 1px solid #eee; font-size: 13px; }
-        .visibility-btn { background: none; border: none; cursor: pointer; font-size: 16px; }
+        .swatch-container { display: flex; gap: 5px; margin-top: 5px; flex-wrap: wrap; }
+        .swatch { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #eee; cursor: pointer; }
+
+        .layer-item { display: flex; align-items: center; justify-content: space-between; padding: 10px; border-bottom: 1px solid #eee; font-size: 13px; }
+        .layer-item.active { background: #e3f2fd; }
 
         .cat-tabs { display: flex; gap: 5px; margin-bottom: 10px; border-bottom: 1px solid #ddd; }
-        .tab-btn { padding: 8px 12px; cursor: pointer; border: none; background: #eee; border-radius: 5px 5px 0 0; font-size: 11px; }
+        .tab-btn { padding: 8px 12px; cursor: pointer; border: none; background: #eee; border-radius: 5px 5px 0 0; }
         .tab-btn.active { background: #3498db; color: white; }
         .preset-group { display: none; }
         .preset-group.active { display: block; }
         
-        .preset-btn { background: #f9f9f9; border: 1px solid #ddd; padding: 8px; margin: 4px 0; width: 100%; text-align: left; border-radius: 4px; cursor: pointer; font-size: 12px; }
-
-        .tool-box { display: flex; flex-wrap: wrap; gap: 10px; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #ddd; align-items: center; }
-        .zoom-control { display: flex; align-items: center; gap: 10px; font-size: 12px; }
+        .tool-box { display: flex; flex-wrap: wrap; gap: 15px; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #ddd; align-items: center; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2 style="margin:0;">Design Nuch Kid Gowns</h2>
+    <h2>Design Nuch Potchaman Pro</h2>
     
     <div class="controls">
-        <button class="btn btn-blue" onclick="toggleSidebar('layers')">Layers (👁️)</button>
-        <button class="btn btn-blue" onclick="toggleSidebar('presets')">Templates (📂)</button>
+        <button class="btn btn-blue" onclick="toggleSidebar('layers')">Layers List</button>
+        <button class="btn btn-blue" onclick="toggleSidebar('presets')">Templates</button>
         <button class="btn btn-yellow" onclick="undo()">Undo</button>
         <button class="btn btn-green" onclick="saveImage()">Save + Watermark</button>
         <button class="btn btn-red" onclick="resetAll()">Reset All</button>
@@ -57,19 +80,18 @@
             <strong>Color:</strong>
             <input type="color" id="colorPicker" value="#ff0000">
             <div class="swatch-container">
-                <div class="swatch" style="background: #0f0f0f" onclick="setQuickColor('#0f0f0f')"></div>
-                <div class="swatch" style="background: #101064" onclick="setQuickColor('#101064')"></div>
-                <div class="swatch" style="background: #ff0000" onclick="setQuickColor('#ff0000')"></div>
-                <div class="swatch" style="background: #0000ff" onclick="setQuickColor('#0000ff')"></div>
+                <div class="swatch" style="background: #800000" onclick="setQuickColor('#800000')"></div>
+                <div class="swatch" style="background: #000080" onclick="setQuickColor('#000080')"></div>
+                <div class="swatch" style="background: #FFD700" onclick="setQuickColor('#FFD700')"></div>
+                <div class="swatch" style="background: #000000" onclick="setQuickColor('#000000')"></div>
             </div>
         </div>
-        <div class="zoom-control">
+        <div style="display:flex; align-items:center; gap:10px;">
             <strong>Zoom:</strong>
-            <input type="range" id="zoomSlider" min="1" max="3" step="0.1" value="1" oninput="applyZoom()">
+            <input type="range" id="zoomSlider" min="1" max="4" step="0.1" value="1" oninput="applyZoom()">
         </div>
         <div>
-            <strong>File:</strong>
-            <input type="text" id="fileName" value="Design" style="padding:5px; width:80px;">
+            <input type="text" id="fileName" value="Design" style="padding:5px; width:100px;">
         </div>
     </div>
 
@@ -78,21 +100,22 @@
             <strong>Layer Management</strong>
             <div id="layerList"></div>
             <hr>
-            <button class="btn btn-blue" style="width:100%" onclick="document.getElementById('imageLoader').click()">+ Upload Custom</button>
+            <button class="btn btn-blue" style="width:100%" onclick="document.getElementById('imageLoader').click()">+ Upload Layer</button>
             <input type="file" id="imageLoader" accept="image/*" style="display:none;">
+            <button class="btn btn-yellow" style="width:100%; margin-top:5px;" onclick="centerContent()">Center View</button>
         </div>
 
-        <div class="canvas-area">
-            <div id="canvasContainer">
+        <div class="canvas-area" id="scrollArea">
+            <div id="canvasWrapper">
                 <canvas id="canvas"></canvas>
             </div>
         </div>
 
         <div id="sidebarPresets" class="sidebar">
             <div class="cat-tabs">
-                <button class="tab-btn active" onclick="showTab('เสื้อครุย')">Gowns</button>
-                <button class="tab-btn" onclick="showTab('แขน')">Arms</button>
-                <button class="tab-btn" onclick="showTab('หมวก')">Hats</button>
+                <button class="tab-btn active" onclick="showTab('เสื้อครุย')">เสื้อครุย</button>
+                <button class="tab-btn" onclick="showTab('แขน')">แขน</button>
+                <button class="tab-btn" onclick="showTab('หมวก')">หมวก</button>
             </div>
             
             <div id="เสื้อครุย" class="preset-group active">
@@ -113,8 +136,7 @@
                 <button class="preset-btn" onclick="addPreset('Ribbon 1', 'แบบชุดครุย/หมวก/Ribbon 1.png')">ริบบิ้น 1</button>
                 <button class="preset-btn" onclick="addPreset('Ribbon 2', 'แบบชุดครุย/หมวก/Ribbon 2.png')">ริบบิ้น 2</button>
                 <button class="preset-btn" onclick="addPreset('Ribbon 3', 'แบบชุดครุย/หมวก/Ribbon 3.png')">ริบบิ้น 3</button>
-            </div>
-        </div>
+            </div>            </div>
     </div>
 </div>
 
@@ -123,14 +145,29 @@
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     const offCanvas = document.createElement('canvas');
     const offCtx = offCanvas.getContext('2d', { willReadFrequently: true });
-
-    // --- แก้ไขตรงนี้: ใส่ชื่อไฟล์ลายน้ำของคุณ ---
-    const watermarkUrl = 'แบบชุดครุย/watermark.png'; 
-    // ---------------------------------------
+    
+    const watermarkUrl = 'watermark.png'; // ตรวจสอบชื่อไฟล์ให้ตรงกับบน GitHub
 
     let layers = []; 
     let history = []; 
     let currentZoom = 1;
+
+    // ระบบ Auto-Save (ข้อ 8)
+    window.onload = () => {
+        const lastSession = localStorage.getItem('nuchDesign_backup');
+        if(lastSession) {
+            // โหลดภาพล่าสุดคืนมาให้
+            const img = new Image();
+            img.onload = () => {
+                canvas.width = img.width; canvas.height = img.height;
+                offCanvas.width = img.width; offCanvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+                offCtx.drawImage(img, 0, 0);
+                saveHistory();
+            };
+            img.src = lastSession;
+        }
+    };
 
     function toggleSidebar(id) {
         document.querySelectorAll('.sidebar').forEach(s => s.classList.remove('active'));
@@ -140,12 +177,19 @@
     function showTab(id) {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.preset-group').forEach(g => g.classList.remove('active'));
-        event.target.classList.add('active');
+        event.currentTarget.classList.add('active');
         document.getElementById(id).classList.add('active');
     }
 
+    // แก้ไขระบบซูม (ข้อ 1)
     function applyZoom() {
         currentZoom = document.getElementById('zoomSlider').value;
+        const wrapper = document.getElementById('canvasWrapper');
+        
+        // ขยาย Wrapper เพื่อให้ ScrollArea เห็นขนาดจริงและสร้าง Scrollbar
+        wrapper.style.width = (canvas.width * currentZoom) + 'px';
+        wrapper.style.height = (canvas.height * currentZoom) + 'px';
+        
         canvas.style.transform = `scale(${currentZoom})`;
     }
 
@@ -155,7 +199,9 @@
 
     function saveHistory() {
         if (history.length > 15) history.shift();
-        history.push(canvas.toDataURL());
+        const data = canvas.toDataURL();
+        history.push(data);
+        localStorage.setItem('nuchDesign_backup', data); // Auto-save
     }
 
     function undo() {
@@ -173,18 +219,19 @@
         }
     }
 
-    // --- ฟังก์ชันอัปเกรด: ปรับขนาดภาพให้เล็กลงอัตโนมัติ ---
     function addLayer(img, name) {
-        const MAX_WIDTH = 1000; // กำหนดความกว้างสูงสุดของ Canvas
+        const MAX_WIDTH = 600; // ปรับขนาดให้เล็กลงตามที่ต้องการ
         if (layers.length === 0) {
             let scale = 1;
-            if (img.width > MAX_WIDTH) {
-                scale = MAX_WIDTH / img.width;
-            }
+            if (img.width > MAX_WIDTH) scale = MAX_WIDTH / img.width;
+            
             canvas.width = img.width * scale;
             canvas.height = img.height * scale;
             offCanvas.width = canvas.width;
             offCanvas.height = canvas.height;
+            
+            // ตั้งค่าซูมเริ่มต้น
+            applyZoom();
         }
         layers.push({ name: name, img: img, visible: true });
         redrawAllLayers();
@@ -209,17 +256,11 @@
             const item = document.createElement('div');
             item.className = 'layer-item';
             item.innerHTML = `
-                <button class="visibility-btn" onclick="toggleVisibility(${realIndex})">${layer.visible ? '👁️' : '🚫'}</button>
-                <span>${layer.name}</span>
+                <span>${layer.visible ? '👁️' : '🚫'} ${layer.name}</span>
                 <button onclick="removeLayer(${realIndex})">✖</button>
             `;
             list.appendChild(item);
         });
-    }
-
-    function toggleVisibility(index) {
-        layers[index].visible = !layers[index].visible;
-        redrawAllLayers();
     }
 
     function removeLayer(index) {
@@ -234,45 +275,43 @@
         img.src = url + "?t=" + new Date().getTime();
     }
 
-    // --- ฟังก์ชันอัปเกรด: เซฟพร้อมซ้อนลายน้ำรูปภาพ ---
+    // ระบบเซฟพร้อมลายน้ำแบบรูปภาพ (ข้อ 10)
     function saveImage() {
         const tempCanvas = document.createElement('canvas');
         tempCanvas.width = canvas.width;
         tempCanvas.height = canvas.height;
         const tempCtx = tempCanvas.getContext('2d');
         
-        // 1. วาดงานออกแบบ
         tempCtx.drawImage(canvas, 0, 0);
         
-        // 2. โหลดลายน้ำมาซ้อน
         const wmImg = new Image();
         wmImg.crossOrigin = "Anonymous";
         wmImg.src = watermarkUrl + "?t=" + new Date().getTime();
         
         wmImg.onload = () => {
-            // ตั้งค่าขนาดลายน้ำ (20% ของความกว้างภาพ)
-            const wmWidth = tempCanvas.width * 0.25;
+            const wmWidth = tempCanvas.width * 1; // ลายน้ำขนาด 100% ของรูป
             const wmHeight = (wmImg.height / wmImg.width) * wmWidth;
+            tempCtx.globalAlpha = 0.5; // ความโปร่งใสของลายน้ำ
+            tempCtx.drawImage(wmImg, tempCanvas.width - wmWidth - 0, tempCanvas.height - wmHeight - 0, wmWidth, wmHeight);
             
-            // วาดลายน้ำที่มุมขวาล่าง (เว้นขอบ 10px)
-            tempCtx.drawImage(wmImg, tempCanvas.width - wmWidth - 10, tempCanvas.height - wmHeight - 10, wmWidth, wmHeight);
-
-            // 3. ทำการดาวน์โหลด
-            triggerDownload(tempCanvas);
+            const link = document.createElement('a');
+            link.download = document.getElementById('fileName').value + '.png';
+            link.href = tempCanvas.toDataURL();
+            link.click();
         };
-
         wmImg.onerror = () => {
-            alert("ไม่พบไฟล์ลายน้ำ จะทำการเซฟแบบไม่มีลายน้ำแทน");
-            triggerDownload(tempCanvas);
+            alert("ไม่พบไฟล์ลายน้ำ ระบบจะบันทึกภาพปกติ");
+            const link = document.createElement('a');
+            link.download = document.getElementById('fileName').value + '.png';
+            link.href = tempCanvas.toDataURL();
+            link.click();
         };
     }
 
-    function triggerDownload(targetCanvas) {
-        const name = document.getElementById('fileName').value || "Design";
-        const link = document.createElement('a');
-        link.download = name + '.png';
-        link.href = targetCanvas.toDataURL();
-        link.click();
+    function centerContent() {
+        const area = document.getElementById('scrollArea');
+        area.scrollLeft = (area.scrollWidth - area.clientWidth) / 2;
+        area.scrollTop = 0;
     }
 
     // ระบบระบายสี
@@ -280,10 +319,11 @@
     canvas.addEventListener('touchstart', (e) => { handleAction(e.touches[0]); e.preventDefault(); });
 
     function handleAction(e) {
-        if (canvas.width === 0) return;
         const rect = canvas.getBoundingClientRect();
-        const x = Math.floor((e.clientX - rect.left) / (rect.width / canvas.width));
-        const y = Math.floor((e.clientY - rect.top) / (rect.height / canvas.height));
+        // คำนวณตำแหน่งพิกเซลจริงโดยหารด้วยค่า Zoom
+        const x = Math.floor((e.clientX - rect.left) / currentZoom * (canvas.width / (rect.width / currentZoom)));
+        const y = Math.floor((e.clientY - rect.top) / currentZoom * (canvas.height / (rect.height / currentZoom)));
+        
         const targetColor = ctx.getImageData(x, y, 1, 1).data;
         const fillRGB = hexToRgb(document.getElementById('colorPicker').value);
         if (targetColor[0] < 80 && targetColor[1] < 80 && targetColor[2] < 80) return;
@@ -311,13 +351,12 @@
         ctx.putImageData(imageData, 0, 0);
         offCtx.putImageData(imageData, 0, 0);
     }
-
+    
     function getPixel(x, y, data) { const i = (y * canvas.width + x) * 4; return [data[i], data[i+1], data[i+2], data[i+3]]; }
     function setPixel(x, y, color, data) { const i = (y * canvas.width + x) * 4; data[i] = color.r; data[i+1] = color.g; data[i+2] = color.b; data[i+3] = 255; }
     function colorsMatch(c1, c2) { return Math.abs(c1[0] - c2[0]) < 40 && Math.abs(c1[1] - c2[1]) < 40 && Math.abs(c1[2] - c2[2]) < 40; }
     function hexToRgb(hex) { const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16); return {r,g,b}; }
-    function resetAll() { if(confirm("ต้องการล้างหน้าจอใช่หรือไม่?")) location.reload(); }
+    function resetAll() { if(confirm("ต้องการรีเซ็ตงานทั้งหมดใช่หรือไม่?")) { localStorage.removeItem('nuchDesign_backup'); location.reload(); } }
 </script>
 </body>
 </html>
-
