@@ -34,7 +34,7 @@
             background: white; 
             touch-action: none; 
             transform-origin: 0 0; /* ซูมจากมุมซ้ายบน */
-            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            box-shadow: 0 0 30px rgba(0,0,0,0.2); //แก้จาก 15px เป็น 30px
         }
         
         .controls { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
@@ -102,7 +102,7 @@
             <hr>
             <button class="btn btn-blue" style="width:100%" onclick="document.getElementById('imageLoader').click()">+ Upload Layer</button>
             <input type="file" id="imageLoader" accept="image/*" style="display:none;">
-            <button class="btn btn-yellow" style="width:100%; margin-top:5px;" onclick="centerContent()">Center View</button>
+            <button class="btn btn-yellow" style="width:100%; margin-top:30px;" onclick="centerContent()">Center View</button> //แก้จาก 5px เป็น 30 px
         </div>
 
         <div class="canvas-area" id="scrollArea">
@@ -146,7 +146,7 @@
     const offCanvas = document.createElement('canvas');
     const offCtx = offCanvas.getContext('2d', { willReadFrequently: true });
     
-    const watermarkUrl = 'watermark.png'; // ตรวจสอบชื่อไฟล์ให้ตรงกับบน GitHub
+    const watermarkUrl = 'แบบชุดครุย/watermark.png'; // ตรวจสอบชื่อไฟล์ให้ตรงกับบน GitHub **แก้ไขเรียบร้อย
 
     let layers = []; 
     let history = []; 
@@ -219,8 +219,9 @@
         }
     }
 
+        // แก้ความกว้างภาพจาก 1000 เป็น 1500
     function addLayer(img, name) {
-        const MAX_WIDTH = 600; // ปรับขนาดให้เล็กลงตามที่ต้องการ
+        const MAX_WIDTH = 1500; // ปรับขนาดให้เล็กลงตามที่ต้องการ
         if (layers.length === 0) {
             let scale = 1;
             if (img.width > MAX_WIDTH) scale = MAX_WIDTH / img.width;
