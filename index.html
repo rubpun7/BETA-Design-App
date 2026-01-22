@@ -60,8 +60,15 @@
         .tab-btn.active { background: #3498db; color: white; }
         .preset-group { display: none; }
         .preset-group.active { display: block; }
-        
+
+        .preset-section { margin-top: 15px; border-top: 1px solid #ddd; padding-top: 10px; max-height: 400px; overflow-y: auto; }
+        .preset-btn { background: #eee; border: 1px solid #ccc; padding: 8px 12px; border-radius: 4px; margin: 4px 2px; cursor: pointer; font-size: 12px; display: block; width: 95%; text-align: left; }
+
         .tool-box { display: flex; flex-wrap: wrap; gap: 15px; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #ddd; align-items: center; }
+
+        /* Reference UI */
+        #refImagePreview { max-width: 100px; display: block; margin-top: 5px; border: 1px dashed #ccc; }
+        .ref-box { font-size: 12px; color: #666; margin-top: 10px; padding: 5px; border: 1px solid #eee; }
     </style>
 </head>
 <body>
@@ -104,12 +111,22 @@
             <hr>
             <button class="btn btn-blue" style="width:100%" onclick="document.getElementById('imageLoader').click()">+ Upload Layer</button>
             <input type="file" id="imageLoader" accept="image/*" style="display:none;">
-            <button class="btn btn-yellow" style="width:100%; margin-top:30px;" onclick="centerContent()">Center View</button> /* แก้จาก 5px เป็น 30 px */
+            <button class="btn btn-yellow" style="width:100%; margin-top:30px;" onclick="centerContent()">Center View</button>
         </div>
 
         <div class="canvas-area" id="scrollArea">
             <div id="canvasWrapper">
                 <canvas id="canvas"></canvas>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <div class="ref-box">
+                        <strong>Reference Image:</strong>
+                        <input type="file" id="refLoader" accept="image/*" style="font-size:10px;">
+                        <img id="refImagePreview" src="" alt="Ref Preview">
+                    </div>
+                    <div class="ref-box">
+                        <strong>Reference Note:</strong><br>
+                        <textarea id="refNote" placeholder="Write notes here..." style="width:150px; height:50px; font-size:11px;"></textarea>
+                </div>
             </div>
         </div>
 
@@ -147,24 +164,25 @@
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     const offCanvas = document.createElement('canvas');
     const offCtx = offCanvas.getContext('2d', { willReadFrequently: true });
-    
-    const watermarkUrl = 'แบบชุดครุย/watermark.png'; // ตรวจสอบชื่อไฟล์ให้ตรงกับบน GitHub **แก้ไขเรียบร้อย
+    const watermarkUrl = 'watermark.png';
 
     let layers = []; 
     let history = []; 
-    let currentZoom = 1;
+    let currentZoom = 1; // ตัวแปรเก็บค่าซูมปัจจุบัน
 
-    // ระบบ Auto-Save (ข้อ 8)
+    // ระบบ Auto-Save
     window.onload = () => {
         const lastSession = localStorage.getItem('nuchDesign_backup');
         if(lastSession) {
-            // โหลดภาพล่าสุดคืนมาให้
             const img = new Image();
             img.onload = () => {
+                // โหลดกลับมาด้วยขนาดจริง
                 canvas.width = img.width; canvas.height = img.height;
                 offCanvas.width = img.width; offCanvas.height = img.height;
                 ctx.drawImage(img, 0, 0);
                 offCtx.drawImage(img, 0, 0);
+                // คำนวณ Zoom ให้พอดีจอหลังโหลดเสร็จ
+                fitCanvasToScreen();
                 saveHistory();
             };
             img.src = lastSession;
@@ -172,15 +190,8 @@
     };
 
     function toggleSidebar(id) {
-        const layersSide = document.getElementById('sidebarLayers');
-        const presetsSide = document.getElementById('sidebarPresets');
-        if(id === 'layers') {
-            layersSide.classList.toggle('active');
-            presetsSide.classList.remove('active');
-        } else {
-            presetsSide.classList.toggle('active');
-            layersSide.classList.remove('active');
-        }
+        document.querySelectorAll('.sidebar').forEach(s => s.classList.remove('active'));
+        document.getElementById('sidebar' + id.charAt(0).toUpperCase() + id.slice(1)).classList.add('active');
     }
 
     function showTab(id) {
@@ -190,15 +201,43 @@
         document.getElementById(id).classList.add('active');
     }
 
-    // แก้ไขระบบซูม (ข้อ 1)
+    // --- ฟังก์ชันใหม่: คำนวณและตั้งค่าซูมให้พอดีจอ ---
+    function fitCanvasToScreen() {
+        if (canvas.width === 0) return;
+        const scrollArea = document.getElementById('scrollArea');
+        // คำนวณพื้นที่ว่าง (ลบ padding ออกนิดหน่อย)
+        const maxWidth = scrollArea.clientWidth - 40;
+        const maxHeight = scrollArea.clientHeight - 40;
+
+        // หาอัตราส่วนที่ต้องย่อ (Scale Factor)
+        const scaleX = maxWidth / canvas.width;
+        const scaleY = maxHeight / canvas.height;
+        // เลือกอัตราส่วนที่ย่อเยอะที่สุดเพื่อให้ภาพลงไปอยู่ในกรอบได้ทั้งใบ
+        let baseScale = Math.min(scaleX, scaleY);
+        
+        // ถ้าภาพเล็กกว่าจออยู่แล้ว ไม่ต้องขยาย ให้ใช้ 1
+        if (baseScale > 1) baseScale = 1;
+
+        // ตั้งค่า Slider ให้เริ่มที่ค่านี้
+        const zoomSlider = document.getElementById('zoomSlider');
+        zoomSlider.min = baseScale;     // ซูมเล็กสุด = พอดีจอ
+        zoomSlider.max = baseScale * 4; // ซูมใหญ่สุด = 4 เท่าของพอดีจอ
+        zoomSlider.value = baseScale;   // ค่าเริ่มต้น
+        zoomSlider.step = baseScale * 0.05; // ความละเอียดการเลื่อน
+
+        applyZoom(); // สั่งให้ซูมตามค่าที่คำนวณได้
+    }
+
     function applyZoom() {
-        currentZoom = document.getElementById('zoomSlider').value;
+        // อัปเดตค่า currentZoom จาก Slider
+        currentZoom = parseFloat(document.getElementById('zoomSlider').value);
         const wrapper = document.getElementById('canvasWrapper');
         
-        // ขยาย Wrapper เพื่อให้ ScrollArea เห็นขนาดจริงและสร้าง Scrollbar
+        // ขยายพื้นที่ Wrapper เพื่อให้เกิด Scrollbar
         wrapper.style.width = (canvas.width * currentZoom) + 'px';
         wrapper.style.height = (canvas.height * currentZoom) + 'px';
         
+        // ใช้ CSS Transform เพื่อย่อ/ขยายการแสดงผล (ไม่กระทบไฟล์จริง)
         canvas.style.transform = `scale(${currentZoom})`;
     }
 
@@ -210,7 +249,7 @@
         if (history.length > 15) history.shift();
         const data = canvas.toDataURL();
         history.push(data);
-        localStorage.setItem('nuchDesign_backup', data); // Auto-save
+        localStorage.setItem('nuchDesign_backup', data);
     }
 
     function undo() {
@@ -228,17 +267,17 @@
         }
     }
 
-        // แก้จาก MAX_WIDTH 1000 เป็น 1500
-        // แก้จาก let scale = 1 เป็น 0.7
+    // --- แก้ไข: ใช้ขนาดจริง ไม่มีการย่อ Canvas ---
     function addLayer(img, name) {
         if (layers.length === 0) {
+            // ใช้ขนาดจริงของภาพเลย (High Res)
             canvas.width = img.width;
             canvas.height = img.height;
             offCanvas.width = img.width;
             offCanvas.height = img.height;
             
-            // ตั้งค่าซูมเริ่มต้น
-            applyZoom();
+            // สั่งให้คำนวณการซูมให้พอดีจอ
+            fitCanvasToScreen();
         }
         layers.push({ name: name, img: img, visible: true });
         redrawAllLayers();
@@ -264,7 +303,11 @@
             item.className = 'layer-item';
             item.innerHTML = `
                 <span>${layer.visible ? '👁️' : '🚫'} ${layer.name}</span>
-                <button onclick="removeLayer(${realIndex})">✖</button>
+                <div class="layer-controls">
+                    <button onclick="moveLayer(${realIndex}, 1)">Up</button>
+                    <button onclick="moveLayer(${realIndex}, -1)">Down</button>
+                    <button style="color:red" onclick="removeLayer(${realIndex})">Del</button>
+                </div>
             `;
             list.appendChild(item);
         });
@@ -298,12 +341,13 @@
         const img = new Image();
         img.crossOrigin = "Anonymous";
         img.onload = () => addLayer(img, name);
+        img.onerror = () => alert("Image load failed. Check GitHub path.");
         img.src = url + "?t=" + new Date().getTime();
     }
 
-    // ระบบเซฟพร้อมลายน้ำแบบรูปภาพ (ข้อ 10)
     function saveImage() {
         const tempCanvas = document.createElement('canvas');
+        // ใช้ขนาดจริงของ Canvas (High Res)
         tempCanvas.width = canvas.width;
         tempCanvas.height = canvas.height;
         const tempCtx = tempCanvas.getContext('2d');
@@ -315,14 +359,14 @@
         wmImg.src = watermarkUrl + "?t=" + new Date().getTime();
         
         wmImg.onload = () => {
-            const wmWidth = tempCanvas.width * 1; // ลายน้ำขนาด 100% ของรูป
+            const wmWidth = tempCanvas.width * 0.3;
             const wmHeight = (wmImg.height / wmImg.width) * wmWidth;
-            tempCtx.globalAlpha = 0.5; // ความโปร่งใสของลายน้ำ
-            tempCtx.drawImage(wmImg, tempCanvas.width - wmWidth - 0, tempCanvas.height - wmHeight - 0, wmWidth, wmHeight);
+            tempCtx.globalAlpha = 0.5;
+            tempCtx.drawImage(wmImg, tempCanvas.width - wmWidth - 20, tempCanvas.height - wmHeight - 20, wmWidth, wmHeight);
             
             const link = document.createElement('a');
             link.download = document.getElementById('fileName').value + '.png';
-            link.href = tempCanvas.toDataURL();
+            link.href = tempCanvas.toDataURL(); // เซฟไฟล์ความละเอียดสูง
             link.click();
         };
         wmImg.onerror = () => {
@@ -340,16 +384,21 @@
         area.scrollTop = 0;
     }
 
-    // ระบบระบายสี
     canvas.addEventListener('mousedown', (e) => handleAction(e));
     canvas.addEventListener('touchstart', (e) => { handleAction(e.touches[0]); e.preventDefault(); });
 
+    // --- แก้ไข: คำนวณพิกเซลโดยหารด้วยค่า Zoom ---
     function handleAction(e) {
+        if (canvas.width === 0) return;
         const rect = canvas.getBoundingClientRect();
-        // คำนวณตำแหน่งพิกเซลจริงโดยหารด้วยค่า Zoom
-        const x = Math.floor((e.clientX - rect.left) / currentZoom * (canvas.width / (rect.width / currentZoom)));
-        const y = Math.floor((e.clientY - rect.top) / currentZoom * (canvas.height / (rect.height / currentZoom)));
         
+        // สูตรใหม่: ตำแหน่งที่จิ้มบนจอ / ค่าซูมปัจจุบัน = ตำแหน่งจริงบนภาพ High-Res
+        const x = Math.floor((e.clientX - rect.left) / currentZoom);
+        const y = Math.floor((e.clientY - rect.top) / currentZoom);
+        
+        // ป้องกันการจิ้มนอกขอบเขต
+        if (x < 0 || x >= canvas.width || y < 0 || y >= canvas.height) return;
+
         const targetColor = ctx.getImageData(x, y, 1, 1).data;
         const fillRGB = hexToRgb(document.getElementById('colorPicker').value);
         if (targetColor[0] < 80 && targetColor[1] < 80 && targetColor[2] < 80) return;
