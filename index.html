@@ -43,6 +43,7 @@
         .btn-yellow { background: #f1c40f; color: #333; }
         .btn-green { background: #27ae60; }
         .btn-red { background: #e74c3c; }
+        .btn-gray { background: #95a5a6; }
 
         .sidebar { flex: 1; min-width: 250px; background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 10px; display: none; }
         .sidebar.active { display: block; }
@@ -52,6 +53,7 @@
 
         .layer-item { display: flex; align-items: center; justify-content: space-between; padding: 10px; border-bottom: 1px solid #eee; font-size: 13px; }
         .layer-item.active { background: #e3f2fd; }
+        .layer-controls button { padding: 4px 8px; font-size: 10px; cursor: pointer; }
 
         .cat-tabs { display: flex; gap: 5px; margin-bottom: 10px; border-bottom: 1px solid #ddd; }
         .tab-btn { padding: 8px 12px; cursor: pointer; border: none; background: #eee; border-radius: 5px 5px 0 0; }
@@ -102,7 +104,7 @@
             <hr>
             <button class="btn btn-blue" style="width:100%" onclick="document.getElementById('imageLoader').click()">+ Upload Layer</button>
             <input type="file" id="imageLoader" accept="image/*" style="display:none;">
-            <button class="btn btn-yellow" style="width:100%; margin-top:30px;" onclick="centerContent()">Center View</button> //แก้จาก 5px เป็น 30 px
+            <button class="btn btn-yellow" style="width:100%; margin-top:30px;" onclick="centerContent()">Center View</button> /* แก้จาก 5px เป็น 30 px */
         </div>
 
         <div class="canvas-area" id="scrollArea">
@@ -170,8 +172,15 @@
     };
 
     function toggleSidebar(id) {
-        document.querySelectorAll('.sidebar').forEach(s => s.classList.remove('active'));
-        document.getElementById('sidebar' + id.charAt(0).toUpperCase() + id.slice(1)).classList.add('active');
+        const layersSide = document.getElementById('sidebarLayers');
+        const presetsSide = document.getElementById('sidebarPresets');
+        if(id === 'layers') {
+            layersSide.classList.toggle('active');
+            presetsSide.classList.remove('active');
+        } else {
+            presetsSide.classList.toggle('active');
+            layersSide.classList.remove('active');
+        }
     }
 
     function showTab(id) {
@@ -219,17 +228,14 @@
         }
     }
 
-        // แก้ความกว้างภาพจาก 1000 เป็น 1500
+        // แก้จาก MAX_WIDTH 1000 เป็น 1500
+        // แก้จาก let scale = 1 เป็น 0.7
     function addLayer(img, name) {
-        const MAX_WIDTH = 1500; // ปรับขนาดให้เล็กลงตามที่ต้องการ
         if (layers.length === 0) {
-            let scale = 1;
-            if (img.width > MAX_WIDTH) scale = MAX_WIDTH / img.width;
-            
-            canvas.width = img.width * scale;
-            canvas.height = img.height * scale;
-            offCanvas.width = canvas.width;
-            offCanvas.height = canvas.height;
+            canvas.width = img.width;
+            canvas.height = img.height;
+            offCanvas.width = img.width;
+            offCanvas.height = img.height;
             
             // ตั้งค่าซูมเริ่มต้น
             applyZoom();
@@ -264,8 +270,27 @@
         });
     }
 
+    function moveLayer(index, direction) {
+        const newIndex = index + direction;
+        if (newIndex >= 0 && newIndex < layers.length) {
+            const temp = layers[index];
+            layers[index] = layers[newIndex];
+            layers[newIndex] = temp;
+            
+            // เมื่อขยับเลเยอร์ ต้อง Clear สีออกแล้ววาดใหม่ (หรือเก็บเฉพาะสีไว้)
+            // เพื่อความง่ายในระบบนี้ จะวาดใหม่ทั้งหมด
+            offCtx.clearRect(0, 0, offCanvas.width, offCanvas.height);
+            redrawAllLayers();
+        }
+    }
+
     function removeLayer(index) {
         layers.splice(index, 1);
+        if (layers.length === 0) { 
+            canvas.width = 0; canvas.height = 0; 
+            offCanvas.width = 0; offCanvas.height = 0;
+        }
+        offCtx.clearRect(0, 0, offCanvas.width, offCanvas.height);
         redrawAllLayers();
     }
 
