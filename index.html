@@ -694,28 +694,7 @@ function addLayer(img, name) {
         }
     };
 
-</script>
-
-<div class="fab-container" id="fabContainer">
-        <button class="fab-main" onclick="toggleFAB()">+</button>
-        
-        <div class="fab-menu">
-        
-            <button id="fabMoveBtn" class="fab-item fab-item-paint" onclick="toggleMoveMode(); toggleFAB();">🖌️🔄</button>
-            
-            <button class="fab-item fab-item-palette" onclick="toggleSidebar('colors'); toggleFAB();">🎨</button>
-
-            <button class="fab-item fab-item-template" onclick="toggleSidebar('presets'); toggleFAB();">🖼️</button>
-            
-            <button class="fab-item fab-item-layer" onclick="toggleSidebar('layers'); toggleFAB();">📑</button>
-            
-            <button class="fab-item fab-item-undo" onclick="undo(); toggleFAB();">🔙</button>
-
-            <button class="fab-item fab-item-save" onclick="saveImage(); toggleFAB();">✅</button>
-
-            <button class="fab-item fab-item-reset" onclick="resetAll(); toggleFAB();">❌</button>
-
-// --- ระบบ Pinch-to-Zoom สำหรับมือถือ ---
+    // --- ระบบ Pinch-to-Zoom สำหรับมือถือ ---
     let initialDist = 0;
     let initialZoom = 1;
 
@@ -757,10 +736,31 @@ function addLayer(img, name) {
             initialDist = 0; // ล้างค่าเมื่อเอานิ้วออก
         }
     });
+    
+</script>
+
+<div class="fab-container" id="fabContainer">
+        <button class="fab-main" onclick="toggleFAB()">+</button>
+        
+        <div class="fab-menu">
+        
+            <button id="fabMoveBtn" class="fab-item fab-item-paint" onclick="toggleMoveMode(); toggleFAB();">🖌️🔄</button>
             
+            <button class="fab-item fab-item-palette" onclick="toggleSidebar('colors'); toggleFAB();">🎨</button>
+
+            <button class="fab-item fab-item-template" onclick="toggleSidebar('presets'); toggleFAB();">🖼️</button>
+            
+            <button class="fab-item fab-item-layer" onclick="toggleSidebar('layers'); toggleFAB();">📑</button>
+            
+            <button class="fab-item fab-item-undo" onclick="undo(); toggleFAB();">🔙</button>
+
+            <button class="fab-item fab-item-save" onclick="saveImage(); toggleFAB();">✅</button>
+
+            <button class="fab-item fab-item-reset" onclick="resetAll(); toggleFAB();">❌</button>
 
         </div>
     </div>
 
 </body>
 </html>
+
