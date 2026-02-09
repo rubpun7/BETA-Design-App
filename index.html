@@ -179,10 +179,10 @@
             <img id="refImagePreview" src="" alt="No Reference Loaded" onerror="this.style.display='none'">
             <textarea id="refNote" placeholder="Write notes here..." style="width:100%; height:80px; margin-top:10px; font-size:12px;"></textarea>
             <div style="display:flex; align-items:center; gap:10px;">
-                <strong>Zoom:</strong>
-                <button class="btn btn-blue" onclick="changeZoom(-0.1)" style="width:40px; font-size:18px;">-</button>
-                <span id="zoomLevel" style="min-width:50px; text-align:center; font-weight:bold;">100%</span>
-                <button class="btn btn-blue" onclick="changeZoom(0.1)" style="width:40px; font-size:18px;">+</button>
+                <strong>:</strong>
+                <button class="btn btn-blue" onclick="change(-0.1)" style="width:40px; font-size:18px;">-</button>
+                <span id="Level" style="min-width:50px; text-align:center; font-weight:bold;">100%</span>
+                <button class="btn btn-blue" onclick="change(0.1)" style="width:40px; font-size:18px;">+</button>
             </div>
         </div>
     
@@ -260,10 +260,15 @@
 
     let layers = []; 
     let history = [];
-    let currentZoom = 1;
-    let minZoom = 0.1; // ตัวแปรเก็บค่าซูมต่ำสุดที่จะถูกคำนวณใหม่เมื่อโหลดภาพ
+    let current = 1;
+    let min = 0.1; // ตัวแปรเก็บค่าซูมต่ำสุดที่จะถูกคำนวณใหม่เมื่อโหลดภาพ
     let isMoveMode = false;
     let selectedPaletteIndex = 0;
+
+    let minZoom = 0.1;               // ค่าซูมต่ำสุด (จะถูกคำนวณใหม่ให้พอดีจอ)
+    let initialPinchDistance = null; // ระยะห่างระหว่าง 2 นิ้วตอนเริ่มแตะ
+    let initialZoomForPinch = 1;     // ค่าซูมก่อนที่จะเริ่มขยับนิ้ว
+    let lastTouchMidPoint = { x: 0, y: 0 }; // จุดกึ่งกลางระหว่าง 2 นิ้ว
 
     // ระบบ Auto-Save และสร้างพื้นหลังเริ่มต้น
         window.onload = () => {
@@ -378,10 +383,10 @@
         const scaleX = maxWidth / canvas.width;
         const scaleY = maxHeight / canvas.height;
         
-        minZoom = Math.min(scaleX, scaleY); // กำหนดค่าซูมที่พอดีจอเป็นค่าต่ำสุด
-        if (minZoom > 1) minZoom = 1;
+        min = Math.min(scaleX, scaleY); // กำหนดค่าซูมที่พอดีจอเป็นค่าต่ำสุด
+        if (min > 1) min = 1;
 
-        currentZoom = minZoom; // เริ่มต้นที่ขนาดพอดีจอ
+        current = min; // เริ่มต้นที่ขนาดพอดีจอ
         applyZoom();
     }
 
@@ -698,38 +703,70 @@ function addLayer(img, name) {
     let initialDist = 0;
     let initialZoom = 1;
 
-    // ฟังก์ชันคำนวณระยะห่างระหว่าง 2 นิ้ว
+// ฟังก์ชันช่วย: คำนวณระยะห่างระหว่าง 2 จุด
     function getDistance(t1, t2) {
         return Math.sqrt(Math.pow(t2.clientX - t1.clientX, 2) + Math.pow(t2.clientY - t1.clientY, 2));
     }
 
-    // แก้ไข Event Listener ของ Canvas
-    canvas.addEventListener('touchstart', (e) => {
+    // ฟังก์ชันช่วย: หาจุดกึ่งกลางระหว่าง 2 จุด
+    function getMidpoint(t1, t2) {
+        return { x: (t1.clientX + t2.clientX) / 2, y: (t1.clientY + t2.clientY) / 2 };
+    }
+
+    // แก้ไขระบบสัมผัส
+    canvas.addEventListener('touchstart', e => {
         if (e.touches.length === 2) {
-            // เมื่อใช้ 2 นิ้วสัมผัส ให้เริ่มบันทึกระยะห่างเริ่มต้น
-            initialDist = getDistance(e.touches[0], e.touches[1]);
-            initialZoom = currentZoom;
-            e.preventDefault(); // ป้องกันการซูมของ Browser เอง
+            // เมื่อใช้ 2 นิ้ว: เริ่มโหมดซูม/เลื่อน
+            initialPinchDistance = getDistance(e.touches[0], e.touches[1]);
+            initialZoomForPinch = currentZoom;
+            lastTouchMidPoint = getMidpoint(e.touches[0], e.touches[1]);
+            e.preventDefault();
         } else if (e.touches.length === 1 && !isMoveMode) {
+            // เมื่อใช้ 1 นิ้ว: ลงสีปกติ
             handleAction(e.touches[0]);
             e.preventDefault();
         }
     }, { passive: false });
 
-    canvas.addEventListener('touchmove', (e) => {
+    canvas.addEventListener('touchmove', e => {
         if (e.touches.length === 2) {
-            // คำนวณระยะห่างใหม่ในขณะที่เคลื่อนนิ้ว
+            // 1. ระบบ Pinch to Zoom
             const currentDist = getDistance(e.touches[0], e.touches[1]);
-            if (initialDist > 0) {
-                // หาอัตราส่วนการขยาย (Ratio)
-                const ratio = currentDist / initialDist;
-                // คำนวณค่าซูมใหม่ โดยจำกัดไม่ให้เกิน 4 เท่า และไม่ให้น้อยกว่าค่า minZoom
-                currentZoom = Math.min(Math.max(initialZoom * ratio, minZoom), 4);
-                applyZoom();
-            }
+            const scale = currentDist / initialPinchDistance;
+            currentZoom = Math.min(Math.max(initialZoomForPinch * scale, minZoom), 4);
+            applyZoom();
+
+            // 2. ระบบเลื่อนภาพ (Two-finger Panning)
+            const currentMidPoint = getMidpoint(e.touches[0], e.touches[1]);
+            const deltaX = currentMidPoint.x - lastTouchMidPoint.x;
+            const deltaY = currentMidPoint.y - lastTouchMidPoint.y;
+            
+            const area = document.getElementById('scrollArea');
+            area.scrollLeft -= deltaX;
+            area.scrollTop -= deltaY;
+            
+            lastTouchMidPoint = currentMidPoint;
             e.preventDefault();
         }
     }, { passive: false });
+
+    // ฟังก์ชันกดปุ่ม +/-
+    function changeZoom(delta) {
+        currentZoom = Math.min(Math.max(currentZoom + delta, minZoom), 4);
+        applyZoom();
+    }
+
+    // ฟังก์ชันอัปเดตการแสดงผล (ใช้ร่วมกันทั้งปุ่มและนิ้ว)
+    function applyZoom() {
+        const wrapper = document.getElementById('canvasWrapper');
+        wrapper.style.width = (canvas.width * currentZoom) + 'px';
+        wrapper.style.height = (canvas.height * currentZoom) + 'px';
+        canvas.style.transform = `scale(${currentZoom})`;
+        
+        // อัปเดตตัวเลขเปอร์เซ็นต์
+        const zoomDisplay = document.getElementById('zoomLevel');
+        if(zoomDisplay) zoomDisplay.innerText = Math.round(currentZoom * 100) + '%';
+    }
 
     canvas.addEventListener('touchend', (e) => {
         if (e.touches.length < 2) {
@@ -763,4 +800,5 @@ function addLayer(img, name) {
 
 </body>
 </html>
+
 
