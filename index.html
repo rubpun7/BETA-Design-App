@@ -64,6 +64,96 @@
         .preset-btn { background: #eee; border: 1px solid #ccc; padding: 8px; margin: 4px 0; width: 100%; text-align: left; border-radius: 4px; font-size: 12px; }
 
         #refImagePreview { max-width: 100%; height: auto; margin-top: 10px; border: 1px solid #ddd; display: block; }
+
+        /* Floating Action Button (FAB) */
+        .fab-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column-reverse;
+            align-items: center;
+            gap: 10px;
+            z-index: 9999;
+        }
+
+        .fab-main {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #3498db;
+            color: white;
+            border: none;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s;
+        }
+
+        .fab-container.active .fab-main { 
+            transform: rotate(45deg); background: #e74c3c; 
+        }
+
+        .fab-menu {
+            display: none;
+            flex-direction: column-reverse;
+            gap: 10px;
+            transition: all 0.3s;
+        }
+
+        .fab-container.active .fab-menu { display: flex; }
+
+        .fab-item {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            line-height: 1.2;
+            padding: 5px;
+        }
+
+        .fab-item-paint { 
+            background: #f1c40f; color: #333; 
+        }
+
+        .fab-item-palette { 
+            background: #9b59b6; 
+        }
+
+        /* สีเหลืองสำหรับปุ่ม Undo ใน FAB */
+        .fab-item-undo { 
+            background: #f1c40f; color: #333; 
+        }
+
+        /* สีเพิ่มเติมสำหรับปุ่มใน FAB */
+        .fab-item-layer { 
+        background: #3498db; 
+        }
+
+        .fab-item-template { 
+        background: #3498db; 
+        }
+
+        .fab-item-save { 
+        background: #27ae60; 
+        }
+
+        .fab-item-reset { 
+        background: #e74c3c; 
+        }
+
     </style>
 </head>
 <body>
@@ -88,13 +178,14 @@
             <input type="file" id="refLoader" accept="image/*" style="font-size:10px; width:100%;">
             <img id="refImagePreview" src="" alt="No Reference Loaded" onerror="this.style.display='none'">
             <textarea id="refNote" placeholder="Write notes here..." style="width:100%; height:80px; margin-top:10px; font-size:12px;"></textarea>
-            <div style="margin-top:10px;">
+            <div style="display:flex; align-items:center; gap:10px;">
                 <strong>Zoom:</strong>
-                <input type="range" id="zoomSlider" min="0.1" max="4" step="0.1" value="1" oninput="applyZoom()" style="width:100%;">
-                <input type="text" id="fileName" value="Design" style="width:100%; margin-top:5px; padding:5px;" placeholder="File Name">
+                <button class="btn btn-blue" onclick="changeZoom(-0.1)" style="width:40px; font-size:18px;">-</button>
+                <span id="zoomLevel" style="min-width:50px; text-align:center; font-weight:bold;">100%</span>
+                <button class="btn btn-blue" onclick="changeZoom(0.1)" style="width:40px; font-size:18px;">+</button>
             </div>
         </div>
-
+    
     </div>
 
     <div class="main-layout">
@@ -117,23 +208,24 @@
             </div>
 
             <div id="เสื้อครุย" class="preset-group active">
-                <button class="preset-btn" onclick="addPreset('Original', 'แบบชุดครุย/เสื้อ/Original.png')">มาตราฐาน</button>
-                <button class="preset-btn" onclick="addPreset('Origin +1', 'แบบชุดครุย/เสื้อ/Origin +1.png')">มาตราฐาน +1</button>
-                <button class="preset-btn" onclick="addPreset('Switch BS', 'แบบชุดครุย/เสื้อ/Switch BS.png')">สลับใหญ่เล็ก</button>
-                <button class="preset-btn" onclick="addPreset('2 Lines', 'แบบชุดครุย/เสื้อ/2 Lines.png')">2 แถบเท่า</button>
-                <button class="preset-btn" onclick="addPreset('3 Lines', 'แบบชุดครุย/เสื้อ/3 Lines.png')">3 แถบเท่า</button>
+                <button class="preset-btn" onclick="addPreset('มาตราฐาน', 'แบบชุดครุย/เสื้อ/Original.png')">มาตราฐาน</button>
+                <button class="preset-btn" onclick="addPreset('มาตราฐาน +1', 'แบบชุดครุย/เสื้อ/Origin +1.png')">มาตราฐาน +1</button>
+                <button class="preset-btn" onclick="addPreset('เฉพาะใหญ่', 'แบบชุดครุย/เสื้อ/Big Only.png')">เฉพาะใหญ่</button>
+                <button class="preset-btn" onclick="addPreset('สลับใหญ่เล็ก', 'แบบชุดครุย/เสื้อ/Switch BS.png')">สลับใหญ่เล็ก</button>
+                <button class="preset-btn" onclick="addPreset('2 แถบเท่า', 'แบบชุดครุย/เสื้อ/2 Lines.png')">2 แถบเท่า</button>
+                <button class="preset-btn" onclick="addPreset('3 แถบเท่า', 'แบบชุดครุย/เสื้อ/3 Lines.png')">3 แถบเท่า</button>
             </div>
             <div id="แขน" class="preset-group">
-                <button class="preset-btn" onclick="addPreset('Chevron 1', 'แบบชุดครุย/เสื้อ/Chevrons/Chevron 1.png')">แถบแขน 1</button>
-                <button class="preset-btn" onclick="addPreset('Chevron 2', 'แบบชุดครุย/เสื้อ/Chevrons/Chevron 2.png')">แถบแขน 2</button>
-                <button class="preset-btn" onclick="addPreset('Chevron 3', 'แบบชุดครุย/เสื้อ/Chevrons/Chevron 3.png')">แถบแขน 3</button>
+                <button class="preset-btn" onclick="addPreset('แถบแขน 1', 'แบบชุดครุย/เสื้อ/Chevrons/Chevron 1.png')">แถบแขน 1</button>
+                <button class="preset-btn" onclick="addPreset('แถบแขน 2', 'แบบชุดครุย/เสื้อ/Chevrons/Chevron 2.png')">แถบแขน 2</button>
+                <button class="preset-btn" onclick="addPreset('แถบแขน 3', 'แบบชุดครุย/เสื้อ/Chevrons/Chevron 3.png')">แถบแขน 3</button>
             </div>
             <div id="หมวก" class="preset-group">
-                <button class="preset-btn" onclick="addPreset('Cap', 'แบบชุดครุย/หมวก/Cap.png')">หมวกเปล่า</button>
-                <button class="preset-btn" onclick="addPreset('Hat Piping', 'แบบชุดครุย/หมวก/Hat Piping.png')">แถบผ้าหมวก</button>
-                <button class="preset-btn" onclick="addPreset('Ribbon 1', 'แบบชุดครุย/หมวก/Ribbon 1.png')">ริบบิ้น 1</button>
-                <button class="preset-btn" onclick="addPreset('Ribbon 2', 'แบบชุดครุย/หมวก/Ribbon 2.png')">ริบบิ้น 2</button>
-                <button class="preset-btn" onclick="addPreset('Ribbon 3', 'แบบชุดครุย/หมวก/Ribbon 3.png')">ริบบิ้น 3</button>
+                <button class="preset-btn" onclick="addPreset('หมวกเปล่า', 'แบบชุดครุย/หมวก/Cap.png')">หมวกเปล่า</button>
+                <button class="preset-btn" onclick="addPreset('แถบผ้าหมวก', 'แบบชุดครุย/หมวก/Hat Piping.png')">แถบผ้าหมวก</button>
+                <button class="preset-btn" onclick="addPreset('ริบบิ้น 1', 'แบบชุดครุย/หมวก/Ribbon 1.png')">ริบบิ้น 1</button>
+                <button class="preset-btn" onclick="addPreset('ริบบิ้น 2', 'แบบชุดครุย/หมวก/Ribbon 2.png')">ริบบิ้น 2</button>
+                <button class="preset-btn" onclick="addPreset('ริบบิ้น 3', 'แบบชุดครุย/หมวก/Ribbon 3.png')">ริบบิ้น 3</button>
             </div>
         </div>
 
@@ -149,10 +241,6 @@
             <div id="canvasWrapper">
                 <canvas id="canvas"></canvas>
             </div>
-        </div>
-
-        <div class="sidebar active" style="flex: 0.5; min-width: 200px;">
-
         </div>
     </div>
 </div>
@@ -173,8 +261,35 @@
     let layers = []; 
     let history = [];
     let currentZoom = 1;
+    let minZoom = 0.1; // ตัวแปรเก็บค่าซูมต่ำสุดที่จะถูกคำนวณใหม่เมื่อโหลดภาพ
     let isMoveMode = false;
     let selectedPaletteIndex = 0;
+
+    // ระบบ Auto-Save และสร้างพื้นหลังเริ่มต้น
+        window.onload = () => {
+            const lastSession = localStorage.getItem('nuchDesign_backup');
+            if(lastSession) {
+                const img = new Image();
+                img.onload = () => {
+                    canvas.width = img.width; 
+                    canvas.height = img.height;
+                    offCanvas.width = img.width; 
+                    offCanvas.height = img.height;
+                    colorCanvas.width = img.width; 
+                    colorCanvas.height = img.height;
+                
+                    ctx.drawImage(img, 0, 0);
+                    offCtx.drawImage(img, 0, 0);
+                
+                    fitCanvasToScreen();
+                    saveHistory();
+                };
+                img.src = lastSession;
+            } else {
+                // กรณีไม่มีงานเก่าค้างอยู่ ให้สร้างพื้นหลังสีขาวขนาด 2481*3508 ทันที
+                createDefaultBackground();
+            }
+        };
 
     // สร้างช่องสี 20 ช่อง
     const paletteGrid = document.getElementById('paletteGrid');
@@ -253,19 +368,41 @@
         reader.readAsDataURL(e.target.files[0]);
     });
 
+    // ปรับปรุงฟังก์ชัน fitCanvasToScreen เพื่อให้กำหนดค่าเริ่มต้นให้ปุ่ม
     function fitCanvasToScreen() {
-        const area = document.getElementById('scrollArea');
-        const baseScale = Math.min((area.clientWidth-40)/canvas.width, (area.clientHeight-40)/canvas.height);
-        document.getElementById('zoomSlider').value = baseScale > 1 ? 1 : baseScale;
+        if (canvas.width === 0) return;
+        const scrollArea = document.getElementById('scrollArea');
+        const maxWidth = scrollArea.clientWidth - 40;
+        const maxHeight = scrollArea.clientHeight - 40;
+
+        const scaleX = maxWidth / canvas.width;
+        const scaleY = maxHeight / canvas.height;
+        
+        minZoom = Math.min(scaleX, scaleY); // กำหนดค่าซูมที่พอดีจอเป็นค่าต่ำสุด
+        if (minZoom > 1) minZoom = 1;
+
+        currentZoom = minZoom; // เริ่มต้นที่ขนาดพอดีจอ
         applyZoom();
     }
 
+    // ฟังก์ชันใหม่สำหรับการเปลี่ยนระดับการซูมทีละขั้น
+    function changeZoom(delta) {
+        // คำนวณค่าซูมใหม่ โดยจำกัดให้อยู่ระหว่าง minZoom ถึง 4 เท่า
+        currentZoom = Math.min(Math.max(currentZoom + delta, minZoom), 4);
+        applyZoom();
+    }
+    
+    // ปรับปรุงฟังก์ชัน applyZoom เดิมให้แสดงเปอร์เซ็นต์ด้วย
     function applyZoom() {
-        currentZoom = parseFloat(document.getElementById('zoomSlider').value);
         const wrapper = document.getElementById('canvasWrapper');
+        if (!wrapper) return;
+        
         wrapper.style.width = (canvas.width * currentZoom) + 'px';
         wrapper.style.height = (canvas.height * currentZoom) + 'px';
         canvas.style.transform = `scale(${currentZoom})`;
+        
+        // อัปเดตตัวเลขเปอร์เซ็นต์บนหน้าจอ
+        document.getElementById('zoomLevel').innerText = Math.round(currentZoom * 100) + '%';
     }
 
     function saveHistory() {
@@ -290,19 +427,40 @@
         } 
     }
     // --- แก้ไข: ใช้ขนาดจริง ไม่มีการย่อ Canvas ---
-    function addLayer(img, name) {
+function addLayer(img, name) {
     if (layers.length === 0) {
         canvas.width = img.width;
         canvas.height = img.height;
-        // ตั้งค่าขนาดแผ่นเก็บสีให้เท่ากับรูปภาพ
         colorCanvas.width = img.width;
         colorCanvas.height = img.height;
-        // เติมพื้นสีขาวเป็นค่าเริ่มต้นในแผ่นเก็บสี
         colorCtx.fillStyle = "white";
         colorCtx.fillRect(0, 0, colorCanvas.width, colorCanvas.height);
+        
+        // เพิ่มบรรทัดนี้เพื่อให้เห็นภาพรวมหลังสร้างพื้นหลังเสร็จ
+        setTimeout(fitCanvasToScreen, 100);
     }
-    layers.push({ name: name, img: img });
+    // เพิ่ม visible: true เข้าไปด้วย
+    layers.push({ name: name, img: img, visible: true });
     redrawAllLayers();
+}
+
+    // ฟังก์ชันสำหรับสร้าง Layer พื้นหลังสีขาวขนาดมาตรฐาน
+    function createDefaultBackground() {
+        const bgCanvas = document.createElement('canvas');
+        bgCanvas.width = 2481;
+        bgCanvas.height = 3508;
+        const bgCtx = bgCanvas.getContext('2d');
+    
+        // เติมสีขาวลงในพื้นที่ทั้งหมด
+        bgCtx.fillStyle = "white";
+        bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
+
+        // แปลงเป็นรูปภาพเพื่อส่งเข้าสู่ระบบ Layer
+        const img = new Image();
+        img.onload = () => {
+        addLayer(img, "พื้นหลังสีขาว");
+        };
+        img.src = bgCanvas.toDataURL();
 }
 
     function redrawAllLayers() {
@@ -374,31 +532,66 @@
     }
 
     function saveImage() {
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = canvas.width;
-        tempCanvas.height = canvas.height;
-        const tCtx = tempCanvas.getContext('2d');
-        tCtx.drawImage(canvas, 0, 0);
-        const wm = new Image();
-        wm.crossOrigin = "Anonymous";
-        wm.src = watermarkUrl + "?t=" + new Date().getTime();
-        wm.onload = () => {
+    const fileNameInput = document.getElementById('fileName');
+    const filename = (fileNameInput && fileNameInput.value) ? fileNameInput.value : 'Design';
 
-            tCtx.globalAlpha = 0.5;
-            tCtx.drawImage(wm, tempCanvas.width - 200, tempCanvas.height - 100, 180, 80);
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = canvas.width;
+    tempCanvas.height = canvas.height;
+    const tCtx = tempCanvas.getContext('2d');
+
+    tCtx.drawImage(canvas, 0, 0);
+
+    // โหลดลายน้ำ (ถ้าต้องการ)
+    const wm = new Image();
+    wm.crossOrigin = "Anonymous";
+    wm.src = watermarkUrl + "?t=" + Date.now();
+
+    wm.onload = () => {
+        // วาดลายน้ำ (ถาพร้อม)
+        try {
+            const wmWidth = wm.width;
+            const wmHeight = wm.height;
+            const posX = tempCanvas.width - wmWidth;
+            const posY = tempCanvas.height - wmHeight;
+            tCtx.globalAlpha = 1;
+            tCtx.drawImage(wm, posX, posY, wmWidth, wmHeight);
+            tCtx.globalAlpha = 1;
+        } catch (e) {
+            // ถ้าวาดลายน้ำมีปัญหา ให้บันทึกต่อไปโดยไม่ใช้ลายน้ำ
+            console.warn('Watermark draw failed:', e);
+        }
+
+        try {
+            const dataURL = tempCanvas.toDataURL("image/png");
             const link = document.createElement('a');
-            link.download = document.getElementById('fileName').value + '.png';
-            link.href = tempCanvas.toDataURL(); // เซฟไฟล์ความละเอียดสูง
+            link.download = filename + '.png';
+            link.href = dataURL;
+            document.body.appendChild(link);
             link.click();
-        };
-        wm.onerror = () => {
-            alert("ไม่พบไฟล์ลายน้ำ ระบบจะบันทึกภาพปกติ");
+            link.remove();
+        } catch (err) {
+            alert('ไม่สามารถบันทึกภาพได้: ' + err.message + '\nสาเหตุที่เป็นไปได้: มีรูปจากแหล่งอื่นทำให้ canvas ถูกจำกัด (CORS).');
+            console.error(err);
+        }
+    };
+
+    wm.onerror = () => {
+        // ถ้าโหลดลายน้ำล้มเหลว ให้บันทึกภาพปกติ (ไม่มีลายน้ำ)
+        try {
+            const dataURL = tempCanvas.toDataURL("image/png");
             const link = document.createElement('a');
-            link.download = document.getElementById('fileName').value + '.png';
-            link.href = tempCanvas.toDataURL();
+            link.download = filename + '.png';
+            link.href = dataURL;
+            document.body.appendChild(link);
             link.click();
-        };
-    }
+            link.remove();
+        } catch (err) {
+            alert('ไม่สามารถบันทึกภาพได้: ' + err.message + '\nสาเหตุที่เป็นไปได้: มีรูปจากแหล่งอื่นทำให้ canvas ถูกจำกัด (CORS).');
+            console.error(err);
+        }
+    };
+}
 
         function centerContent() { 
             const area = document.getElementById('scrollArea'); 
@@ -426,41 +619,28 @@
         floodFill(x, y, fillRGB, targetColor);
     }
 
-    function floodFill(startX, startY, fillColor, targetColor) {
-        // อ่านข้อมูลสีจากหน้าจอหลัก (เพื่อหาขอบเขตเส้นสีดำ)
-        const screenData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-    
-        // เตรียมข้อมูลลงในแผ่นเก็บสี
-        const colorImageData = colorCtx.getImageData(0, 0, colorCanvas.width, colorCanvas.height);
-        const colorData = colorImageData.data;
-    
-        // ตรวจสอบว่าสีที่จิ้มกับสีที่จะเติมเป็นสีเดียวกันหรือไม่
+    function floodFill(startX, startY, fillColor) {
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+        const targetColor = getPixel(startX, startY, data);
         if (colorsMatch(targetColor, [fillColor.r, fillColor.g, fillColor.b, 255])) return;
-    
+        
         const stack = [[startX, startY]];
-        const visited = new Uint8Array(canvas.width * canvas.height);
-
         while (stack.length > 0) {
             const [x, y] = stack.pop();
-            const idx = (y * canvas.width + x);
-            const pos = idx * 4;
-
-            if (x < 0 || x >= canvas.width || y < 0 || y >= canvas.height || visited[idx]) continue;
-        
-            const currentColor = [screenData[pos], screenData[pos+1], screenData[pos+2], screenData[pos+3]];
-        
+            const currentColor = getPixel(x, y, data);
             if (colorsMatch(currentColor, targetColor)) {
-                visited[idx] = 1;
-                // ระบายสีลงในแผ่นเก็บสี
-                setPixel(x, y, fillColor, colorData);
-            
-                stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+                setPixel(x, y, fillColor, data);
+                if (x > 0) stack.push([x - 1, y]);
+                if (x < canvas.width - 1) stack.push([x + 1, y]);
+                if (y > 0) stack.push([x, y - 1]);
+                if (y < canvas.height - 1) stack.push([x, y + 1]);
             }
         }
-    
-        colorCtx.putImageData(colorImageData, 0, 0);
-        redrawAllLayers(); // วาดรวมทุกอย่างอีกครั้ง
-}
+        ctx.putImageData(imageData, 0, 0);
+        // อัปเดต Hidden Canvas ด้วยพิกเซลสีใหม่
+        offCtx.putImageData(imageData, 0, 0);
+    }
 
     // แก้ฟังก์ชันเสริมให้รับข้อมูล data ตรงๆ
     function getPixel(x, y, data) { 
@@ -489,6 +669,98 @@
         data[i+2] = color.b;
         data[i+3] = 255; // ความทึบ 100%
 }
+
+    // ฟังก์ชัน เปิด-ปิด เมนูปุ่มลอย
+    function toggleFAB() {
+        const fab = document.getElementById('fabContainer');
+        fab.classList.toggle('active');
+    }
+
+    // ปรับปรุงฟังก์ชัน toggleMoveMode เดิมของคุณเพื่อให้ปุ่มลอยอัปเดตชื่อด้วย
+    // ให้หาฟังก์ชัน toggleMoveMode เดิมแล้วเพิ่ม 2 บรรทัดสุดท้ายนี้เข้าไปครับ
+    const originalToggleMoveMode = toggleMoveMode;
+    toggleMoveMode = function() {
+        originalToggleMoveMode(); // เรียกใช้การทำงานเดิม
+        const fabBtn = document.getElementById('fabMoveBtn');
+        // อัปเดตข้อความบนปุ่มลอย
+        if(isMoveMode) {
+            fabBtn.innerText = "👆🔄";
+            fabBtn.style.background = "#e67e22";
+            fabBtn.style.color = "white";
+        } else {
+            fabBtn.innerText = "🖌️🔄";
+            fabBtn.style.background = "#f1c40f";
+            fabBtn.style.color = "#333";
+        }
+    };
+
 </script>
+
+<div class="fab-container" id="fabContainer">
+        <button class="fab-main" onclick="toggleFAB()">+</button>
+        
+        <div class="fab-menu">
+        
+            <button id="fabMoveBtn" class="fab-item fab-item-paint" onclick="toggleMoveMode(); toggleFAB();">🖌️🔄</button>
+            
+            <button class="fab-item fab-item-palette" onclick="toggleSidebar('colors'); toggleFAB();">🎨</button>
+
+            <button class="fab-item fab-item-template" onclick="toggleSidebar('presets'); toggleFAB();">🖼️</button>
+            
+            <button class="fab-item fab-item-layer" onclick="toggleSidebar('layers'); toggleFAB();">📑</button>
+            
+            <button class="fab-item fab-item-undo" onclick="undo(); toggleFAB();">🔙</button>
+
+            <button class="fab-item fab-item-save" onclick="saveImage(); toggleFAB();">✅</button>
+
+            <button class="fab-item fab-item-reset" onclick="resetAll(); toggleFAB();">❌</button>
+
+// --- ระบบ Pinch-to-Zoom สำหรับมือถือ ---
+    let initialDist = 0;
+    let initialZoom = 1;
+
+    // ฟังก์ชันคำนวณระยะห่างระหว่าง 2 นิ้ว
+    function getDistance(t1, t2) {
+        return Math.sqrt(Math.pow(t2.clientX - t1.clientX, 2) + Math.pow(t2.clientY - t1.clientY, 2));
+    }
+
+    // แก้ไข Event Listener ของ Canvas
+    canvas.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 2) {
+            // เมื่อใช้ 2 นิ้วสัมผัส ให้เริ่มบันทึกระยะห่างเริ่มต้น
+            initialDist = getDistance(e.touches[0], e.touches[1]);
+            initialZoom = currentZoom;
+            e.preventDefault(); // ป้องกันการซูมของ Browser เอง
+        } else if (e.touches.length === 1 && !isMoveMode) {
+            handleAction(e.touches[0]);
+            e.preventDefault();
+        }
+    }, { passive: false });
+
+    canvas.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 2) {
+            // คำนวณระยะห่างใหม่ในขณะที่เคลื่อนนิ้ว
+            const currentDist = getDistance(e.touches[0], e.touches[1]);
+            if (initialDist > 0) {
+                // หาอัตราส่วนการขยาย (Ratio)
+                const ratio = currentDist / initialDist;
+                // คำนวณค่าซูมใหม่ โดยจำกัดไม่ให้เกิน 4 เท่า และไม่ให้น้อยกว่าค่า minZoom
+                currentZoom = Math.min(Math.max(initialZoom * ratio, minZoom), 4);
+                applyZoom();
+            }
+            e.preventDefault();
+        }
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', (e) => {
+        if (e.touches.length < 2) {
+            initialDist = 0; // ล้างค่าเมื่อเอานิ้วออก
+        }
+    });
+            
+
+        </div>
+    </div>
+
 </body>
 </html>
